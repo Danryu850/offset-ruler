@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オフセット定規 — 無音区間の計測</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d0f13;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #262b35;
+    --text: #eceae4;
+    --muted: #7a8092;
+    --teal: #46d9c0;
+    --coral: #ff7a52;
+    --coral-dim: #ff7a5233;
+    --violet: #b39cff;
+    --violet-dim: #b39cff33;
+    --font-main: 'JetBrains Mono','Noto Sans JP',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-main);
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+  .app{
+    max-width:760px;
+    margin:0 auto;
+  }
+  header{
+    margin-bottom:28px;
+  }
+  .eyebrow{
+    font-family:var(--font-main);
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--coral);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .logo{
+    display:block;
+    height:42px;
+    width:auto;
+    max-width:100%;
+    margin:0 0 8px;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.6;
+    max-width:520px;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:18px;
+  }
+
+  /* Drop zone */
+  .dropzone{
+    border:1.5px dashed var(--border);
+    border-radius:12px;
+    padding:36px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--teal);
+    background:#46d9c00a;
+  }
+  .dropzone .icon{
+    font-family:var(--font-main);
+    font-size:22px;
+    color:var(--teal);
+    margin-bottom:10px;
+  }
+  .dropzone .label{
+    font-size:14px;
+    color:var(--text);
+    margin-bottom:4px;
+  }
+  .dropzone .hint{
+    font-size:12px;
+    color:var(--muted);
+  }
+  input[type=file]{display:none;}
+
+  .filename{
+    font-family:var(--font-main);
+    font-size:13px;
+    color:var(--muted);
+    margin-top:10px;
+    word-break:break-all;
+  }
+
+  /* Result readout */
+  .result{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .readout-label{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .readout{
+    font-family:var(--font-main);
+    font-size:44px;
+    font-weight:700;
+    color:var(--coral);
+    line-height:1;
+  }
+  .readout.copied{ color: var(--teal); }
+  .readout-sub{
+    font-family:var(--font-main);
+    font-size:13px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+  .copy-btn{
+    font-family:var(--font-main);
+    font-size:13px;
+    font-weight:600;
+    color:var(--bg);
+    background:var(--teal);
+    border:none;
+    border-radius:8px;
+    padding:10px 16px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .copy-btn:active{ transform: translateY(1px); }
+
+  /* Mode tabs */
+  .tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:9px 10px;
+    border-radius:8px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    user-select:none;
+  }
+  .tab.active{
+    background:var(--coral-dim);
+    border-color:var(--coral);
+    color:var(--coral);
+  }
+
+  /* Controls */
+  .row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .row label{
+    font-size:13px;
+    color:var(--muted);
+    min-width:110px;
+  }
+  input[type=range]{
+    flex:1;
+    accent-color:var(--coral);
+  }
+  .range-val{
+    font-family:var(--font-main);
+    font-size:12px;
+    color:var(--text);
+    min-width:56px;
+    text-align:right;
+  }
+  input[type=number]{
+    font-family:var(--font-main);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    width:120px;
+    font-size:14px;
+  }
+  .manual-hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:-6px;
+    margin-bottom:14px;
+  }
+
+  /* Waveform */
+  canvas{
+    width:100%;
+    display:block;
+    border-radius:10px;
+    background:var(--panel-2);
+    cursor:crosshair;
+    touch-action:none;
+  }
+  .canvas-caption{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--font-main);
+    font-size:11px;
+    color:var(--muted);
+    margin-top:6px;
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:var(--font-main);
+    font-size:13px;
+    font-weight:600;
+    border-radius:8px;
+    padding:10px 14px;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+  }
+  .btn.primary{
+    background:var(--teal);
+    border-color:var(--teal);
+    color:var(--bg);
+  }
+  .btn:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+
+  .empty-state{
+    color:var(--muted);
+    font-size:13px;
+    text-align:center;
+    padding:30px 10px;
+  }
+  .hidden{ display:none !important; }
+
+  .section-title{
+    font-family:var(--font-main);
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:14px;
+    color:var(--text);
+  }
+  .bpm-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .bpm-readout{
+    font-family:var(--font-main);
+    font-size:32px;
+    font-weight:700;
+    color:var(--teal);
+    flex:1;
+    min-width:140px;
+  }
+  .copy-btn.small{
+    padding:8px 12px;
+    font-size:12px;
+    background:var(--panel-2);
+    color:var(--text);
+    border:1px solid var(--border);
+  }
+  .demo-readout{ color: var(--violet) !important; }
+  select{
+    font-family:var(--font-main);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow">TJA OFFSET UTILITY</div>
+    <img class="logo" src="offset.svg" alt="オフセット定規">
+    <p class="sub">曲を読み込むと、最初の無音区間の長さを自動で測ってミリ秒で表示します。TJAのOFFSET欄にはそのままマイナス値として使えます。自動検出が外れたときは手動モードで波形を見ながら調整してください。</p>
+  </header>
+
+  <div class="panel">
+    <div class="dropzone" id="dropzone">
+      <div class="icon">♪ ⇥</div>
+      <div class="label">音声ファイルをドロップ、またはクリックして選択</div>
+      <div class="hint">mp3 / wav / ogg / m4a など、ブラウザが再生できる形式</div>
+      <div class="filename" id="filename"></div>
+    </div>
+    <input type="file" id="fileInput" accept="audio/*">
+  </div>
+
+  <div id="mainPanel" class="hidden">
+
+    <div class="panel result">
+      <div>
+        <div class="readout-label">TJA OFFSET (秒)</div>
+        <div class="readout" id="readout">-0.000</div>
+        <div class="readout-sub" id="readoutSub">ミリ秒換算: -0ms</div>
+      </div>
+      <button class="copy-btn" id="copyBtn">値をコピー</button>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <div class="tab active" id="tabAuto">自動検出</div>
+        <div class="tab" id="tabManual">手動設定</div>
+      </div>
+
+      <div id="autoControls">
+        <div class="row">
+          <label>感度</label>
+          <input type="range" id="sensSlider" min="-60" max="-15" value="-40" step="1">
+          <span class="range-val" id="sensVal">-40dB</span>
+        </div>
+        <div class="manual-hint">左に動かすほど小さい音にも反応します。無音のはずの区間がノイズで誤検出される場合は右へ。</div>
+      </div>
+
+      <div id="manualControls" class="hidden">
+        <div class="row">
+          <label>無音の長さ</label>
+          <input type="number" id="manualMs" min="0" step="1" value="0"> <span style="color:var(--muted);font-size:13px;">ms</span>
+        </div>
+        <div class="manual-hint">数値を入力するか、下の波形を直接ドラッグしてマーカーを動かしてください。</div>
+      </div>
+
+      <div class="row">
+        <label>縮尺(表示幅)</label>
+        <input type="range" id="zoomSlider" min="100" max="4000" value="1000" step="50">
+        <span class="range-val" id="zoomVal">1000ms</span>
+      </div>
+      <div class="row">
+        <label>表示位置</label>
+        <input type="range" id="panSlider" min="0" max="0" value="0" step="10">
+        <span class="range-val" id="panVal">0ms</span>
+      </div>
+
+      <canvas id="wave" height="160"></canvas>
+      <div class="canvas-caption">
+        <span id="zoomStartLabel">0ms</span>
+        <span id="zoomEndLabel">1000ms</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="playBtn">▶ マーカーから再生</button>
+        <button class="btn" id="stopBtn" disabled>■ 停止</button>
+        <button class="btn" id="jumpBtn">◎ マーカーへ表示を合わせる</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">BPM (自動測定)</div>
+      <div class="bpm-row">
+        <button class="btn primary" id="bpmBtn">♩ オフセット位置から測定</button>
+        <div class="bpm-readout" id="bpmReadout">---</div>
+        <button class="btn" id="bpmHalfBtn" disabled>÷2</button>
+        <button class="btn" id="bpmDoubleBtn" disabled>×2</button>
+        <button class="copy-btn small" id="bpmCopyBtn" disabled>コピー</button>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <label>手動で設定</label>
+        <input type="number" id="bpmManualInput" min="1" step="0.01" placeholder="例: 222.22">
+        <button class="btn" id="bpmManualApplyBtn">適用</button>
+      </div>
+      <div class="manual-hint">自動測定がうまくいかない曲(BPMが揺れる曲、変拍子っぽい曲など)は、ここに直接数値を入力してください。</div>
+      <div class="manual-hint">オフセット位置から最大30秒ぶんを解析してテンポを推定します。あくまで推定値です。倍/半分のテンポで出てしまうことがあるので、明らかにおかしい時は ÷2 / ×2 で直してください。測定すると波形の上にオフセット基準のグリッド線が表示されます(4拍ごとに太い線)。ズレて見える場合はオフセットかBPMがまだ合っていない目安になります。</div>
+
+      <div class="bpm-row" style="margin-top:16px;">
+        <button class="btn" id="lockGridBtn" disabled>グリッドを固定</button>
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="snapCheckbox" disabled> グリッドにスナップ
+        </label>
+        <span class="manual-hint" style="margin:0;">固定すると、オフセットやBPMを動かしても波形上のグリッド線がその場に留まります。スナップをONにすると、マーカーをドラッグしたとき近くの拍の位置に吸い付きます。</span>
+      </div>
+
+      <div class="bpm-row" style="margin-top:16px;">
+        <button class="btn" id="metronomeBtn" disabled>メトロノーム: OFF</button>
+        <label style="font-size:13px;color:var(--muted);">拍子</label>
+        <select id="meterSelect">
+          <option value="2">2拍子</option>
+          <option value="3">3拍子</option>
+          <option value="4" selected>4拍子</option>
+          <option value="5">5拍子</option>
+          <option value="6">6拍子</option>
+          <option value="7">7拍子</option>
+          <option value="8">8拍子</option>
+        </select>
+      </div>
+      <div class="manual-hint">再生ボタンを押すと、オフセットとBPM・拍子に合わせてクリック音が鳴ります。</div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">デモ開始位置 (DEMOSTART)</div>
+      <div class="result" style="margin-bottom:16px;">
+        <div>
+          <div class="readout-label">DEMOSTART値(秒)</div>
+          <div class="readout demo-readout" id="demoReadout">0.000</div>
+        </div>
+        <button class="copy-btn" id="demoCopyBtn">値をコピー</button>
+      </div>
+      <div class="row">
+        <label>開始位置(秒)</label>
+        <input type="number" id="demoSec" min="0" step="0.001" value="0">
+      </div>
+      <div class="manual-hint">波形上の紫色のマーカーをドラッグしても調整できます。曲を再生しながらプレビューの始まってほしい場所(サビの頭など)を探してください。</div>
+      <div class="actions">
+        <button class="btn primary" id="demoPlayBtn">◆ デモ位置から再生</button>
+        <button class="btn" id="demoStopBtn" disabled>■ 停止</button>
+        <button class="btn" id="demoJumpBtn">◎ デモ位置へ表示を合わせる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const filenameEl = document.getElementById('filename');
+  const mainPanel = document.getElementById('mainPanel');
+  const readout = document.getElementById('readout');
+  const readoutSub = document.getElementById('readoutSub');
+  const copyBtn = document.getElementById('copyBtn');
+  const tabAuto = document.getElementById('tabAuto');
+  const tabManual = document.getElementById('tabManual');
+  const autoControls = document.getElementById('autoControls');
+  const manualControls = document.getElementById('manualControls');
+  const sensSlider = document.getElementById('sensSlider');
+  const sensVal = document.getElementById('sensVal');
+  const manualMs = document.getElementById('manualMs');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const zoomVal = document.getElementById('zoomVal');
+  const zoomStartLabel = document.getElementById('zoomStartLabel');
+  const zoomEndLabel = document.getElementById('zoomEndLabel');
+  const panSlider = document.getElementById('panSlider');
+  const panVal = document.getElementById('panVal');
+  const jumpBtn = document.getElementById('jumpBtn');
+  const canvas = document.getElementById('wave');
+  const ctx = canvas.getContext('2d');
+  const playBtn = document.getElementById('playBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const bpmBtn = document.getElementById('bpmBtn');
+  const bpmReadout = document.getElementById('bpmReadout');
+  const bpmHalfBtn = document.getElementById('bpmHalfBtn');
+  const bpmDoubleBtn = document.getElementById('bpmDoubleBtn');
+  const bpmCopyBtn = document.getElementById('bpmCopyBtn');
+  const bpmManualInput = document.getElementById('bpmManualInput');
+  const bpmManualApplyBtn = document.getElementById('bpmManualApplyBtn');
+  const demoReadout = document.getElementById('demoReadout');
+  const demoCopyBtn = document.getElementById('demoCopyBtn');
+  const demoSec = document.getElementById('demoSec');
+  const demoPlayBtn = document.getElementById('demoPlayBtn');
+  const demoStopBtn = document.getElementById('demoStopBtn');
+  const demoJumpBtn = document.getElementById('demoJumpBtn');
+  const lockGridBtn = document.getElementById('lockGridBtn');
+  const snapCheckbox = document.getElementById('snapCheckbox');
+  const metronomeBtn = document.getElementById('metronomeBtn');
+  const meterSelect = document.getElementById('meterSelect');
+
+  let audioCtx = null;
+  let audioBuffer = null;
+  let monoData = null;       // Float32Array, mixed to mono
+  let sampleRate = 44100;
+  let durationMs = 0;
+  let mode = 'auto';         // 'auto' | 'manual'
+  let onsetSamples = 0;      // current marker position, in samples
+  let demoMs = 0;             // demo-start marker position, in ms
+  let currentBPM = null;
+  let gridLocked = false;
+  let lockedOnsetMs = 0;
+  let lockedBPM = null;
+  let metronomeEnabled = false;
+  let scheduledClicks = [];  // oscillator nodes scheduled for the current playback
+  let viewMs = 1000;         // width of the visible window, in ms (the "縮尺")
+  let viewStartMs = 0;       // left edge of the visible window, in ms (the "表示位置")
+  let playSource = null;
+  let dragging = false;
+  let dragTarget = 'offset'; // 'offset' | 'demo'
+  let dragSnapAnchorMs = 0;
+  let dragSnapBeatMs = null;
+  let isPlaying = false;
+  let playStartCtxTime = 0;
+  let playStartOffsetSec = 0;
+  let playheadMs = null;      // current playback position while playing, null when stopped
+  let playheadRAF = null;
+
+  // ---------- file loading ----------
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) loadFile(e.target.files[0]);
+  });
+
+  function loadFile(file){
+    filenameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        const buf = await audioCtx.decodeAudioData(e.target.result.slice(0));
+        onAudioReady(buf);
+      } catch(err){
+        alert('この音声ファイルを読み込めませんでした。別の形式を試してください。');
+        console.error(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function onAudioReady(buf){
+    audioBuffer = buf;
+    sampleRate = buf.sampleRate;
+    // mix down to mono
+    const ch = buf.numberOfChannels;
+    const len = buf.length;
+    const mixed = new Float32Array(len);
+    for (let c=0; c<ch; c++){
+      const data = buf.getChannelData(c);
+      for (let i=0;i<len;i++) mixed[i] += data[i]/ch;
+    }
+    monoData = mixed;
+    durationMs = buf.duration*1000;
+    zoomSlider.max = Math.max(4000, Math.round(durationMs));
+    viewMs = Math.min(viewMs, durationMs) || durationMs;
+    zoomSlider.value = viewMs;
+    zoomVal.textContent = `${Math.round(viewMs)}ms`;
+    viewStartMs = 0;
+    updatePanRange();
+    demoMs = 0;
+    updateDemoReadout();
+    currentBPM = null;
+    bpmReadout.textContent = '---';
+    bpmManualInput.value = '';
+    bpmHalfBtn.disabled = true;
+    bpmDoubleBtn.disabled = true;
+    bpmCopyBtn.disabled = true;
+    gridLocked = false;
+    lockGridBtn.textContent = '🔓 グリッドを固定';
+    lockGridBtn.disabled = true;
+    metronomeEnabled = false;
+    metronomeBtn.textContent = '🔔 メトロノーム: OFF';
+    metronomeBtn.disabled = true;
+    mainPanel.classList.remove('hidden');
+    runAutoDetect();
+    centerViewOnMarker();
+    draw();
+  }
+
+  function maxViewStart(){
+    return Math.max(0, durationMs - viewMs);
+  }
+
+  function updatePanRange(){
+    const max = maxViewStart();
+    panSlider.max = max;
+    panSlider.step = Math.max(1, Math.round(viewMs/50));
+    viewStartMs = Math.min(Math.max(0, viewStartMs), max);
+    panSlider.value = viewStartMs;
+    panVal.textContent = `${Math.round(viewStartMs)}ms`;
+    zoomStartLabel.textContent = `${Math.round(viewStartMs)}ms`;
+    zoomEndLabel.textContent = `${Math.round(viewStartMs+viewMs)}ms`;
+  }
+
+  function centerViewOnMarker(){
+    const onsetMs = onsetSamples/sampleRate*1000;
+    viewStartMs = onsetMs - viewMs/2;
+    updatePanRange();
+  }
+
+  // ---------- onset detection ----------
+  function detectOnset(thresholdDb){
+    const thresholdAmp = Math.pow(10, thresholdDb/20);
+    const frame = Math.max(1, Math.round(sampleRate * 0.005)); // 5ms window
+    for (let i=0; i<monoData.length; i+=frame){
+      const end = Math.min(i+frame, monoData.length);
+      let sumSq = 0;
+      for (let j=i;j<end;j++) sumSq += monoData[j]*monoData[j];
+      const rms = Math.sqrt(sumSq/(end-i));
+      if (rms > thresholdAmp){
+        for (let j=i;j<end;j++){
+          if (Math.abs(monoData[j]) > thresholdAmp*0.6) return j;
+        }
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  function runAutoDetect(){
+    if (!monoData) return;
+    onsetSamples = detectOnset(parseFloat(sensSlider.value));
+    syncManualField();
+    updateReadout();
+    const onsetMs = onsetSamples/sampleRate*1000;
+    if (onsetMs < viewStartMs || onsetMs > viewStartMs+viewMs) centerViewOnMarker();
+    draw();
+  }
+
+  function syncManualField(){
+    manualMs.value = Math.round(onsetSamples/sampleRate*1000);
+  }
+
+  function updateReadout(){
+    const ms = onsetSamples/sampleRate*1000;
+    const sec = ms/1000;
+    readout.textContent = `-${sec.toFixed(3)}`;
+    readoutSub.textContent = `ミリ秒換算: -${Math.round(ms)}ms`;
+  }
+
+  function updateDemoReadout(){
+    demoReadout.textContent = (demoMs/1000).toFixed(3);
+    demoSec.value = (demoMs/1000).toFixed(3);
+  }
+
+  function centerViewOnDemo(){
+    viewStartMs = demoMs - viewMs/2;
+    updatePanRange();
+  }
+
+  // ---------- mode tabs ----------
+  tabAuto.addEventListener('click', () => {
+    mode = 'auto';
+    tabAuto.classList.add('active');
+    tabManual.classList.remove('active');
+    autoControls.classList.remove('hidden');
+    manualControls.classList.add('hidden');
+    if (monoData) runAutoDetect();
+  });
+  tabManual.addEventListener('click', () => {
+    mode = 'manual';
+    tabManual.classList.add('active');
+    tabAuto.classList.remove('active');
+    manualControls.classList.remove('hidden');
+    autoControls.classList.add('hidden');
+    syncManualField();
+  });
+
+  sensSlider.addEventListener('input', () => {
+    sensVal.textContent = `${sensSlider.value}dB`;
+    if (mode === 'auto' && monoData) runAutoDetect();
+  });
+
+  manualMs.addEventListener('input', () => {
+    if (!monoData) return;
+    const ms = Math.min(Math.max(0, parseFloat(manualMs.value) || 0), durationMs);
+    onsetSamples = Math.round(ms/1000*sampleRate);
+    updateReadout();
+    if (ms < viewStartMs || ms > viewStartMs+viewMs) centerViewOnMarker();
+    draw();
+  });
+
+  zoomSlider.addEventListener('input', () => {
+    viewMs = parseFloat(zoomSlider.value);
+    zoomVal.textContent = `${viewMs}ms`;
+    updatePanRange();
+    draw();
+  });
+
+  panSlider.addEventListener('input', () => {
+    viewStartMs = parseFloat(panSlider.value);
+    panVal.textContent = `${Math.round(viewStartMs)}ms`;
+    zoomStartLabel.textContent = `${Math.round(viewStartMs)}ms`;
+    zoomEndLabel.textContent = `${Math.round(viewStartMs+viewMs)}ms`;
+    draw();
+  });
+
+  jumpBtn.addEventListener('click', () => {
+    if (!monoData) return;
+    centerViewOnMarker();
+    draw();
+  });
+
+  demoSec.addEventListener('input', () => {
+    if (!monoData) return;
+    const sec = Math.min(Math.max(0, parseFloat(demoSec.value) || 0), durationMs/1000);
+    demoMs = sec*1000;
+    demoReadout.textContent = sec.toFixed(3);
+    if (demoMs < viewStartMs || demoMs > viewStartMs+viewMs) centerViewOnDemo();
+    draw();
+  });
+
+  demoJumpBtn.addEventListener('click', () => {
+    if (!monoData) return;
+    centerViewOnDemo();
+    draw();
+  });
+
+  demoCopyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(demoReadout.textContent).then(() => {
+      const orig = demoCopyBtn.textContent;
+      demoCopyBtn.textContent = 'コピーしました';
+      setTimeout(() => { demoCopyBtn.textContent = orig; }, 1200);
+    });
+  });
+
+  // ---------- copy ----------
+  copyBtn.addEventListener('click', () => {
+    const text = readout.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      readout.classList.add('copied');
+      const orig = copyBtn.textContent;
+      copyBtn.textContent = 'コピーしました';
+      setTimeout(() => { readout.classList.remove('copied'); copyBtn.textContent = orig; }, 1200);
+    });
+  });
+
+  // ---------- waveform drawing ----------
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = 160 * devicePixelRatio;
+  }
+
+  function draw(){
+    if (!monoData) return;
+    resizeCanvas();
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    const viewStartSamples = Math.round(viewStartMs/1000*sampleRate);
+    const viewSamples = Math.round(viewMs/1000*sampleRate);
+    const samplesPerPx = Math.max(1, viewSamples/w);
+    const mid = h/2;
+
+    ctx.strokeStyle = '#262b35';
+    ctx.lineWidth = 1*devicePixelRatio;
+    ctx.beginPath();
+    ctx.moveTo(0, mid); ctx.lineTo(w, mid);
+    ctx.stroke();
+
+    ctx.fillStyle = '#46d9c0';
+    for (let x=0; x<w; x++){
+      const start = viewStartSamples + Math.floor(x*samplesPerPx);
+      const end = Math.min(monoData.length, viewStartSamples + Math.floor((x+1)*samplesPerPx));
+      let min=0, max=0;
+      for (let i=Math.max(0,start);i<end;i++){
+        const v = monoData[i];
+        if (v<min) min=v;
+        if (v>max) max=v;
+      }
+      const y1 = mid - max*mid*0.95;
+      const y2 = mid - min*mid*0.95;
+      ctx.fillRect(x, y1, 1, Math.max(1,y2-y1));
+    }
+
+    // beat grid, aligned to the offset marker (or a locked position, if fixed)
+    const gridBPM = gridLocked ? lockedBPM : currentBPM;
+    if (gridBPM){
+      const beatMs = 60000/gridBPM;
+      const onsetMs0 = gridLocked ? lockedOnsetMs : (onsetSamples/sampleRate*1000);
+      let n = Math.ceil((viewStartMs-onsetMs0)/beatMs);
+      let guard = 0;
+      while (guard++ < 20000){
+        const beatTimeMs = onsetMs0 + n*beatMs;
+        if (beatTimeMs > viewStartMs+viewMs) break;
+        const x = ((beatTimeMs-viewStartMs)/viewMs) * w;
+        const isMeasure = ((n % 4)+4)%4 === 0;
+        ctx.strokeStyle = isMeasure ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.10)';
+        ctx.lineWidth = (isMeasure?1.5:1)*devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(x,0); ctx.lineTo(x,h);
+        ctx.stroke();
+        n++;
+      }
+    }
+
+    // marker
+    const markerX = ((onsetSamples/sampleRate*1000)-viewStartMs)/viewMs * w;
+    if (markerX >= 0 && markerX <= w){
+      ctx.strokeStyle = '#ff7a52';
+      ctx.lineWidth = 2*devicePixelRatio;
+      ctx.setLineDash([6*devicePixelRatio,4*devicePixelRatio]);
+      ctx.beginPath();
+      ctx.moveTo(markerX, 0); ctx.lineTo(markerX, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#ff7a52';
+      ctx.beginPath();
+      ctx.arc(markerX, 10*devicePixelRatio, 5*devicePixelRatio, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // demo-start marker
+    const demoX = (demoMs-viewStartMs)/viewMs * w;
+    if (demoX >= 0 && demoX <= w){
+      ctx.strokeStyle = '#b39cff';
+      ctx.lineWidth = 2*devicePixelRatio;
+      ctx.beginPath();
+      ctx.moveTo(demoX, 0); ctx.lineTo(demoX, h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#b39cff';
+      ctx.beginPath();
+      const r = 5*devicePixelRatio;
+      const cy = h-10*devicePixelRatio;
+      ctx.moveTo(demoX, cy-r); ctx.lineTo(demoX+r, cy); ctx.lineTo(demoX, cy+r); ctx.lineTo(demoX-r, cy);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // playhead (only while playing)
+    if (playheadMs !== null){
+      const px = (playheadMs-viewStartMs)/viewMs * w;
+      if (px >= 0 && px <= w){
+        ctx.strokeStyle = '#eceae4';
+        ctx.lineWidth = 2*devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(px, 0); ctx.lineTo(px, h);
+        ctx.stroke();
+      }
+    }
+  }
+
+  window.addEventListener('resize', () => { if(monoData) draw(); });
+
+  // ---------- dragging marker ----------
+  function xToMs(clientX){
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (clientX-rect.left)/rect.width; // not clamped: can go <0 or >1 while dragging
+    return viewStartMs + fraction*viewMs;
+  }
+
+  function startDrag(clientX){
+    if (!monoData) return;
+    dragging = true;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = clientX-rect.left;
+    const onsetMs = onsetSamples/sampleRate*1000;
+    const offsetX = ((onsetMs-viewStartMs)/viewMs) * rect.width;
+    const demoX = ((demoMs-viewStartMs)/viewMs) * rect.width;
+    const offsetVisible = offsetX >= -20 && offsetX <= rect.width+20;
+    const demoVisible = demoX >= -20 && demoX <= rect.width+20;
+    if (demoVisible && (!offsetVisible || Math.abs(clickX-demoX) < Math.abs(clickX-offsetX))){
+      dragTarget = 'demo';
+    } else {
+      dragTarget = 'offset';
+    }
+    // snap reference: whatever grid is currently on screen (locked or live)
+    const gridBPM = gridLocked ? lockedBPM : currentBPM;
+    dragSnapAnchorMs = gridLocked ? lockedOnsetMs : onsetMs;
+    dragSnapBeatMs = gridBPM ? 60000/gridBPM : null;
+    moveDrag(clientX);
+  }
+
+  function moveDrag(clientX){
+    if (!dragging || !monoData) return;
+    let ms = xToMs(clientX);
+    ms = Math.min(Math.max(0, ms), durationMs);
+
+    if (snapCheckbox.checked && dragSnapBeatMs){
+      const beats = Math.round((ms-dragSnapAnchorMs)/dragSnapBeatMs);
+      ms = Math.min(Math.max(0, dragSnapAnchorMs + beats*dragSnapBeatMs), durationMs);
+    }
+
+    // auto-scroll the view if the pointer drags past its edges
+    const margin = viewMs*0.1;
+    if (ms < viewStartMs + margin){
+      viewStartMs = Math.max(0, ms - margin);
+      updatePanRange();
+    } else if (ms > viewStartMs + viewMs - margin){
+      viewStartMs = Math.min(maxViewStart(), ms - viewMs + margin);
+      updatePanRange();
+    }
+
+    if (dragTarget === 'demo'){
+      demoMs = ms;
+      updateDemoReadout();
+    } else {
+      onsetSamples = Math.round(ms/1000*sampleRate);
+      if (mode !== 'manual'){
+        tabManual.click();
+      }
+      syncManualField();
+      updateReadout();
+    }
+    draw();
+  }
+  function endDrag(){ dragging = false; }
+
+  canvas.addEventListener('mousedown', e => startDrag(e.clientX));
+  window.addEventListener('mousemove', e => moveDrag(e.clientX));
+  window.addEventListener('mouseup', endDrag);
+  canvas.addEventListener('touchstart', e => { startDrag(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { moveDrag(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  canvas.addEventListener('touchend', endDrag);
+
+  // ---------- playback preview ----------
+  playBtn.addEventListener('click', () => startPlayback(onsetSamples/sampleRate*1000));
+  demoPlayBtn.addEventListener('click', () => startPlayback(demoMs));
+
+  function startPlayback(startMs){
+    if (!audioBuffer) return;
+    stopPlayback();
+    const startSec = startMs/1000;
+    playSource = audioCtx.createBufferSource();
+    playSource.buffer = audioBuffer;
+    playSource.connect(audioCtx.destination);
+    playStartCtxTime = audioCtx.currentTime;
+    playStartOffsetSec = startSec;
+    isPlaying = true;
+    playSource.start(0, startSec);
+    setPlayButtonsDisabled(true);
+    playSource.onended = () => {
+      isPlaying = false;
+      playheadMs = null;
+      setPlayButtonsDisabled(false);
+      if (playheadRAF) cancelAnimationFrame(playheadRAF);
+      draw();
+    };
+    if (metronomeEnabled && currentBPM) scheduleMetronome(startSec);
+    animatePlayhead();
+  }
+
+  const CSHARP = 554.37;    // C#5
+  const HI_CSHARP = 1108.73; // C#6, one octave up — plays on the downbeat
+
+  function scheduleClick(when, accent){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = accent ? HI_CSHARP : CSHARP;
+    gain.gain.setValueAtTime(0, when);
+    gain.gain.linearRampToValueAtTime(accent ? 0.5 : 0.35, when+0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when+0.06);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(when);
+    osc.stop(when+0.08);
+    scheduledClicks.push(osc);
+  }
+
+  function scheduleMetronome(startSec){
+    const beatSec = 60/currentBPM;
+    const onsetSec = onsetSamples/sampleRate;
+    const meter = parseInt(meterSelect.value, 10) || 4;
+    let idx = Math.ceil((startSec-onsetSec)/beatSec);
+    let guard = 0;
+    while (guard++ < 20000){
+      const beatTimeSec = onsetSec + idx*beatSec;
+      if (beatTimeSec > audioBuffer.duration) break;
+      const when = playStartCtxTime + (beatTimeSec-startSec);
+      const isDownbeat = ((idx%meter)+meter)%meter === 0;
+      scheduleClick(when, isDownbeat);
+      idx++;
+    }
+  }
+
+  function setPlayButtonsDisabled(playing){
+    playBtn.disabled = playing;
+    demoPlayBtn.disabled = playing;
+    stopBtn.disabled = !playing;
+    demoStopBtn.disabled = !playing;
+  }
+
+  function animatePlayhead(){
+    if (!isPlaying) return;
+    const currentSec = playStartOffsetSec + (audioCtx.currentTime - playStartCtxTime);
+    playheadMs = currentSec*1000;
+
+    // keep the playhead in view, scrolling the window forward as playback advances
+    if (playheadMs > viewStartMs + viewMs){
+      viewStartMs = Math.min(maxViewStart(), playheadMs);
+      updatePanRange();
+    } else if (playheadMs < viewStartMs){
+      viewStartMs = Math.max(0, playheadMs - viewMs*0.1);
+      updatePanRange();
+    }
+
+    draw();
+    playheadRAF = requestAnimationFrame(animatePlayhead);
+  }
+
+  stopBtn.addEventListener('click', stopPlayback);
+  demoStopBtn.addEventListener('click', stopPlayback);
+  function stopPlayback(){
+    if (playSource){
+      try{ playSource.onended = null; playSource.stop(); }catch(e){}
+      playSource = null;
+    }
+    scheduledClicks.forEach(osc => { try{ osc.stop(0); }catch(e){} });
+    scheduledClicks = [];
+    isPlaying = false;
+    playheadMs = null;
+    if (playheadRAF) cancelAnimationFrame(playheadRAF);
+    setPlayButtonsDisabled(false);
+    draw();
+  }
+
+  // ---------- BPM estimation ----------
+  function estimateBPM(){
+    if (!monoData) return null;
+    const startSample = onsetSamples;
+    const analyzeDurationSec = Math.min(30, (monoData.length-startSample)/sampleRate);
+    if (analyzeDurationSec < 3) return null;
+    const analyzeSamples = Math.floor(analyzeDurationSec*sampleRate);
+    const frameSize = Math.round(sampleRate*0.01); // 10ms frames
+    const numFrames = Math.floor(analyzeSamples/frameSize);
+    const envelope = new Float32Array(numFrames);
+    for (let f=0; f<numFrames; f++){
+      let sumSq = 0;
+      const s = startSample+f*frameSize;
+      const e = Math.min(monoData.length, s+frameSize);
+      for (let i=s;i<e;i++) sumSq += monoData[i]*monoData[i];
+      envelope[f] = Math.sqrt(sumSq/Math.max(1,e-s));
+    }
+    // onset strength: half-wave rectified derivative of the energy envelope
+    const onsetStrength = new Float32Array(numFrames);
+    for (let f=1; f<numFrames; f++){
+      const diff = envelope[f]-envelope[f-1];
+      onsetStrength[f] = diff>0 ? diff : 0;
+    }
+    // autocorrelation over the lag range corresponding to 60-220 BPM
+    const frameRate = 100; // frames per second (10ms frames)
+    const minBPM=60, maxBPM=220;
+    const minLag = Math.round(frameRate*60/maxBPM);
+    const maxLag = Math.round(frameRate*60/minBPM);
+    let bestLag = minLag, bestScore = -Infinity;
+    for (let lag=minLag; lag<=maxLag; lag++){
+      let sum = 0;
+      for (let f=0; f<numFrames-lag; f++) sum += onsetStrength[f]*onsetStrength[f+lag];
+      if (sum > bestScore){ bestScore = sum; bestLag = lag; }
+    }
+    const periodSec = bestLag/frameRate;
+    let bpm = 60/periodSec;
+    while (bpm < 80) bpm *= 2;
+    while (bpm > 200) bpm /= 2;
+    return bpm;
+  }
+
+  function showBPM(bpm){
+    currentBPM = bpm;
+    bpmReadout.textContent = bpm ? `${bpm.toFixed(2)} BPM` : '検出できませんでした';
+    bpmManualInput.value = bpm ? bpm.toFixed(2) : '';
+    bpmHalfBtn.disabled = !bpm;
+    bpmDoubleBtn.disabled = !bpm;
+    bpmCopyBtn.disabled = !bpm;
+    lockGridBtn.disabled = !bpm;
+    snapCheckbox.disabled = !bpm;
+    metronomeBtn.disabled = !bpm;
+    if (!bpm){
+      gridLocked = false;
+      lockGridBtn.textContent = 'グリッドを固定';
+      snapCheckbox.checked = false;
+      metronomeEnabled = false;
+      metronomeBtn.textContent = 'メトロノーム: OFF';
+    }
+    draw();
+  }
+
+  lockGridBtn.addEventListener('click', () => {
+    if (!currentBPM) return;
+    gridLocked = !gridLocked;
+    if (gridLocked){
+      lockedOnsetMs = onsetSamples/sampleRate*1000;
+      lockedBPM = currentBPM;
+      lockGridBtn.textContent = '固定解除';
+    } else {
+      lockGridBtn.textContent = 'グリッドを固定';
+    }
+    draw();
+  });
+
+  metronomeBtn.addEventListener('click', () => {
+    if (!currentBPM) return;
+    metronomeEnabled = !metronomeEnabled;
+    metronomeBtn.textContent = metronomeEnabled ? 'メトロノーム: ON' : 'メトロノーム: OFF';
+  });
+
+  bpmBtn.addEventListener('click', () => {
+    if (!monoData) return;
+    bpmReadout.textContent = '解析中…';
+    setTimeout(() => showBPM(estimateBPM()), 10);
+  });
+  bpmHalfBtn.addEventListener('click', () => { if (currentBPM) showBPM(currentBPM/2); });
+  bpmDoubleBtn.addEventListener('click', () => { if (currentBPM) showBPM(currentBPM*2); });
+
+  function applyManualBPM(){
+    if (!monoData) return;
+    const val = parseFloat(bpmManualInput.value);
+    if (val && val > 0) showBPM(val);
+  }
+  bpmManualApplyBtn.addEventListener('click', applyManualBPM);
+  bpmManualInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyManualBPM(); });
+  bpmCopyBtn.addEventListener('click', () => {
+    if (!currentBPM) return;
+    navigator.clipboard.writeText(currentBPM.toFixed(2)).then(() => {
+      const orig = bpmCopyBtn.textContent;
+      bpmCopyBtn.textContent = 'コピーしました';
+      setTimeout(() => { bpmCopyBtn.textContent = orig; }, 1200);
+    });
+  });
+})();
+</script>
+</body>
+</html>
