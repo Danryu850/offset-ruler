@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0041)https://danryu850.github.io/offset-ruler/ -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>オフセット定規 — 無音区間の計測</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./オフセット定規 — 無音区間の計測_files/css2" rel="stylesheet">
 <style>
   :root{
     --bg: #0d0f13;
@@ -304,14 +304,44 @@
     padding:8px 10px;
     font-size:13px;
   }
+  .offset-values{
+    display:flex;
+    gap:18px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .offset-values > div{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 12px;
+    min-width:150px;
+  }
+  .offset-values span{
+    display:block;
+    color:var(--muted);
+    font-size:11px;
+    margin-bottom:3px;
+  }
+  .offset-values strong{
+    font-family:var(--font-main);
+    font-size:16px;
+    color:var(--text);
+  }
+  .offset-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="eyebrow">TJA OFFSET UTILITY</div>
-    <img class="logo" src="offset.svg" alt="オフセット定規">
-    <p class="sub">曲を読み込むと、最初の無音区間の長さを自動で測ってミリ秒で表示します。TJAのOFFSET欄にはそのままマイナス値として使えます。自動検出が外れたときは手動モードで波形を見ながら調整してください。</p>
+    <img class="logo" src="./オフセット定規 — 無音区間の計測_files/offset.svg" alt="オフセット定規">
+    <p class="sub">曲を読み込むと、最初の無音区間の長さを自動で測ってミリ秒で表示します。TJAのOFFSET欄にはそのままマイナス値として使えます。結果は「生(そのまま)」と「Direct Sound (+50ms)」を切り替えて表示できます。自動検出が外れたときは手動モードで波形を見ながら調整してください。</p>
   </header>
 
   <div class="panel">
@@ -327,12 +357,28 @@
   <div id="mainPanel" class="hidden">
 
     <div class="panel result">
-      <div>
-        <div class="readout-label">TJA OFFSET (秒)</div>
+      <div style="flex:1;min-width:260px;">
+        <div class="readout-label">OFFSET</div>
         <div class="readout" id="readout">-0.000</div>
-        <div class="readout-sub" id="readoutSub">ミリ秒換算: -0ms</div>
+        <div class="readout-sub" id="readoutSub">生(そのまま) · ミリ秒換算: -0ms</div>
+        <div class="offset-values" id="offsetValues">
+          <div>
+            <span>生</span>
+            <strong id="rawOffsetReadout">-0.000</strong>
+          </div>
+          <div>
+            <span>Direct Sound</span>
+            <strong id="dsoundOffsetReadout">-0.050</strong>
+          </div>
+        </div>
       </div>
-      <button class="copy-btn" id="copyBtn">値をコピー</button>
+      <div class="offset-actions">
+        <select id="offsetTypeSelect" aria-label="OFFSETの表示方式">
+          <option value="raw">生 (そのまま)</option>
+          <option value="dsound">Direct Sound (+50ms)</option>
+        </select>
+        <button class="copy-btn" id="copyBtn">値をコピー</button>
+      </div>
     </div>
 
     <div class="panel">
@@ -377,7 +423,7 @@
 
       <div class="actions">
         <button class="btn primary" id="playBtn">▶ マーカーから再生</button>
-        <button class="btn" id="stopBtn" disabled>■ 停止</button>
+        <button class="btn" id="stopBtn" disabled="">■ 停止</button>
         <button class="btn" id="jumpBtn">◎ マーカーへ表示を合わせる</button>
       </div>
     </div>
@@ -387,9 +433,9 @@
       <div class="bpm-row">
         <button class="btn primary" id="bpmBtn">♩ オフセット位置から測定</button>
         <div class="bpm-readout" id="bpmReadout">---</div>
-        <button class="btn" id="bpmHalfBtn" disabled>÷2</button>
-        <button class="btn" id="bpmDoubleBtn" disabled>×2</button>
-        <button class="copy-btn small" id="bpmCopyBtn" disabled>コピー</button>
+        <button class="btn" id="bpmHalfBtn" disabled="">÷2</button>
+        <button class="btn" id="bpmDoubleBtn" disabled="">×2</button>
+        <button class="copy-btn small" id="bpmCopyBtn" disabled="">コピー</button>
       </div>
       <div class="row" style="margin-top:14px;">
         <label>手動で設定</label>
@@ -400,20 +446,20 @@
       <div class="manual-hint">オフセット位置から最大30秒ぶんを解析してテンポを推定します。あくまで推定値です。倍/半分のテンポで出てしまうことがあるので、明らかにおかしい時は ÷2 / ×2 で直してください。測定すると波形の上にオフセット基準のグリッド線が表示されます(4拍ごとに太い線)。ズレて見える場合はオフセットかBPMがまだ合っていない目安になります。</div>
 
       <div class="bpm-row" style="margin-top:16px;">
-        <button class="btn" id="lockGridBtn" disabled>グリッドを固定</button>
+        <button class="btn" id="lockGridBtn" disabled="">グリッドを固定</button>
         <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="snapCheckbox" disabled> グリッドにスナップ
+          <input type="checkbox" id="snapCheckbox" disabled=""> グリッドにスナップ
         </label>
         <span class="manual-hint" style="margin:0;">固定すると、オフセットやBPMを動かしても波形上のグリッド線がその場に留まります。スナップをONにすると、マーカーをドラッグしたとき近くの拍の位置に吸い付きます。</span>
       </div>
 
       <div class="bpm-row" style="margin-top:16px;">
-        <button class="btn" id="metronomeBtn" disabled>メトロノーム: OFF</button>
+        <button class="btn" id="metronomeBtn" disabled="">メトロノーム: OFF</button>
         <label style="font-size:13px;color:var(--muted);">拍子</label>
         <select id="meterSelect">
           <option value="2">2拍子</option>
           <option value="3">3拍子</option>
-          <option value="4" selected>4拍子</option>
+          <option value="4" selected="">4拍子</option>
           <option value="5">5拍子</option>
           <option value="6">6拍子</option>
           <option value="7">7拍子</option>
@@ -439,7 +485,7 @@
       <div class="manual-hint">波形上の紫色のマーカーをドラッグしても調整できます。曲を再生しながらプレビューの始まってほしい場所(サビの頭など)を探してください。</div>
       <div class="actions">
         <button class="btn primary" id="demoPlayBtn">◆ デモ位置から再生</button>
-        <button class="btn" id="demoStopBtn" disabled>■ 停止</button>
+        <button class="btn" id="demoStopBtn" disabled="">■ 停止</button>
         <button class="btn" id="demoJumpBtn">◎ デモ位置へ表示を合わせる</button>
       </div>
     </div>
@@ -454,6 +500,9 @@
   const mainPanel = document.getElementById('mainPanel');
   const readout = document.getElementById('readout');
   const readoutSub = document.getElementById('readoutSub');
+  const rawOffsetReadout = document.getElementById('rawOffsetReadout');
+  const dsoundOffsetReadout = document.getElementById('dsoundOffsetReadout');
+  const offsetTypeSelect = document.getElementById('offsetTypeSelect');
   const copyBtn = document.getElementById('copyBtn');
   const tabAuto = document.getElementById('tabAuto');
   const tabManual = document.getElementById('tabManual');
@@ -641,10 +690,24 @@
   }
 
   function updateReadout(){
-    const ms = onsetSamples/sampleRate*1000;
-    const sec = ms/1000;
-    readout.textContent = `-${sec.toFixed(3)}`;
-    readoutSub.textContent = `ミリ秒換算: -${Math.round(ms)}ms`;
+    const rawMs = onsetSamples/sampleRate*1000;
+    const rawSec = rawMs/1000;
+
+    // 生の無音区間はTJA OFFSETでは負値。
+    // Direct Soundは「生の無音区間 + 50ms」を必要とするため、
+    // TJA OFFSETとしてはさらに50msマイナスする。
+    // 例: 無音100ms → 生 -0.100 / Direct Sound -0.150
+    const rawOffsetSec = -rawSec;
+    const dsoundOffsetSec = rawOffsetSec - 0.050;
+
+    rawOffsetReadout.textContent = rawOffsetSec.toFixed(3);
+    dsoundOffsetReadout.textContent = dsoundOffsetSec.toFixed(3);
+
+    const isDsound = offsetTypeSelect.value === 'dsound';
+    const selected = isDsound ? dsoundOffsetSec : rawOffsetSec;
+    readout.textContent = selected.toFixed(3);
+    readoutSub.textContent =
+      `${isDsound ? 'Direct Sound (+50ms)' : '生 (そのまま)'} · ミリ秒換算: ${Math.round(selected*1000)}ms`;
   }
 
   function updateDemoReadout(){
@@ -732,6 +795,8 @@
       setTimeout(() => { demoCopyBtn.textContent = orig; }, 1200);
     });
   });
+
+  offsetTypeSelect.addEventListener('change', updateReadout);
 
   // ---------- copy ----------
   copyBtn.addEventListener('click', () => {
@@ -1131,5 +1196,6 @@
   });
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
